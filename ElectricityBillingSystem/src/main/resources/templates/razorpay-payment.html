@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Payment | Razorpay | EBS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to right, #8360c3, #2ebf91);
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .card {
+            padding: 30px;
+            border-radius: 15px;
+            background: white;
+            color: black;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h3>🧾 Electricity Bill Payment</h3>
+    <p>Amount to Pay: ₹<span th:text="${amount}"></span></p>
+    <button id="rzp-button" class="btn btn-success">Pay Now</button>
+</div>
+
+<script th:inline="javascript">
+    let amount = [[${amount}]];
+    let key = [[${key}]];
+
+    document.getElementById('rzp-button').onclick = function () {
+        fetch("/create_order", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({amount: Math.round(amount)})
+
+        })
+        .then(response => response.json())
+        .then(order => {
+            let options = {
+                "key": key,
+                "amount": order.amount,
+                "currency": "INR",
+                "name": "Electricity Board",
+                "description": "Bill Payment",
+                "order_id": order.id,
+                "handler": function (response) {
+                    alert("✅ Payment Successful! Payment ID: " + response.razorpay_payment_id);
+                    window.location.href = "/user/dashboard";
+                },
+                "theme": {
+                    "color": "#3399cc"
+                }
+            };
+
+            let rzp = new Razorpay(options);
+            rzp.open();
+        });
+    }
+</script>
+
+</body>
+</html>
